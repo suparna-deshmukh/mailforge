@@ -373,7 +373,7 @@ export function errorCard(message, { onRetry, detail } = {}) {
 
 export function emptyState({ icon: ic = "inbox", title, text, primary, secondary }) {
   return el("div", { class: "empty" },
-    el("div", { class: "empty-illust" }, spotIllust(ic)),
+    el("div", { class: "empty-illust", html: spotIllust(ic) }),
     el("div", { class: "empty-title" }, title),
     text ? el("p", { class: "empty-text" }, text) : null,
     primary || null,

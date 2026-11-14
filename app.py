@@ -3609,15 +3609,55 @@ def api_template_ai_reminder():
 
 # ==================== UI redesign additions (additive only) ====================
 
-def _static_version(path):
-    """Cache-busting query for /static files: ?v=<mtime>."""
+def _css_bundle_mtime(path):
+    """Max mtime of a CSS file plus everything it @imports (cache-bust the whole bundle)."""
+    p = BASE / "static" / path.lstrip("/")
+    import re as _re
     try:
+        mts = [p.stat().st_mtime]
+        for rel in _re.findall(r'@import url\("[^"]+"\)', p.read_text()):
+            rel = _re.match(r'@import url\("([^"]+)"\)', rel).group(1)
+            try:
+                mts.append((p.parent / rel).stat().st_mtime)
+            except OSError:
+                pass
+        return max(mts)
+    except OSError:
+        return 0
+
+
+def _static_version(path):
+    """Cache-busting query for /static files: ?v=<mtime> (bundle-aware for CSS)."""
+    try:
+        if path.lstrip("/").endswith(".css"):
+            return "?v=" + str(int(_css_bundle_mtime(path)))
         p = BASE / "static" / path.lstrip("/")
         return "?v=" + str(int(p.stat().st_mtime))
     except OSError:
         return ""
 
+
 app.jinja_env.globals["sv"] = lambda path: _static_version(path)
+
+
+@app.route("/static/css/app.css")
+def _css_app_bundle():
+    """Serve app.css with per-file ?v= on every @import so imported files can't be served stale."""
+    import re as _re
+    css_dir = BASE / "static" / "css"
+    src = (css_dir / "app.css").read_text()
+
+    def _ver(m):
+        rel = m.group(1)
+        try:
+            return '@import url("%s?v=%d");' % (rel, int((css_dir / rel).stat().st_mtime))
+        except OSError:
+            return m.group(0)
+
+    out = _re.sub(r'@import url\("([^"]+)"\);', _ver, src)
+    resp = Response(out, mimetype="text/css")
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 
 @app.after_request

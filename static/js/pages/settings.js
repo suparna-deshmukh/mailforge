@@ -77,11 +77,14 @@ document.querySelectorAll("#set-nav a").forEach((a) => {
 });
 
 function row(label, help, ctrl, opts = {}) {
+  const wrapped = (ctrl && ctrl.classList && ctrl.classList.contains("set-row-ctrl"))
+    ? ctrl
+    : el("div", { class: "set-row-ctrl" }, ctrl);
   return el("div", { class: "set-row" + (opts.cls ? " " + opts.cls : "") },
     el("div", { class: "set-row-main" },
       el("div", { class: "set-row-label" }, label),
       help ? el("div", { class: "set-row-help" }, help) : null),
-    ctrl);
+    wrapped);
 }
 function switchInput(on, onchange, label) {
   const inp = el("input", { type: "checkbox" });
@@ -450,9 +453,9 @@ function secAI(col) {
 
 /* ================= Branding (admin) ================= */
 function secBranding(col) {
-  const team = el("input", { class: "input", value: SETTINGS.brand_team_name || "", "aria-label": "Team name" });
-  const tagline = el("input", { class: "input", value: SETTINGS.brand_tagline || "", "aria-label": "Login footer line" });
-  const adminEmail = el("input", { class: "input", value: SETTINGS.admin_email || "", "aria-label": "Admin email" });
+  const team = el("input", { class: "input wide", value: SETTINGS.brand_team_name || "", "aria-label": "Team name" });
+  const tagline = el("input", { class: "input wide", value: SETTINGS.brand_tagline || "", "aria-label": "Login footer line" });
+  const adminEmail = el("input", { class: "input wide", value: SETTINGS.admin_email || "", "aria-label": "Admin email" });
   const mini = el("div", { class: "brand-preview" },
     el("div", { class: "side-mark" }, icon("send", "i")),
     el("div", {},
